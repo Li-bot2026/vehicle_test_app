@@ -1,0 +1,151 @@
+# ============================================================
+# 车机测试用例示例 (YAML 格式)
+# ============================================================
+# 本文件演示如何编写测试用例，支持以下功能：
+# - 用例分类与优先级
+# - 前置/后置条件 (setup/teardown)
+# - 参数化与数据驱动
+# - 多种步骤类型
+# - 断言规则
+
+version: "1.0"
+
+test_cases:
+
+  # ============================================================
+  # 用例 1: 音量控制 - 串口通信测试
+  # ============================================================
+  - name: "音量调节-串口指令测试"
+    description: "通过串口发送音量调节指令，验证车机响应"
+    category: "音频系统"
+    tags: ["串口", "音量", "P1"]
+    priority: "P1"
+    timeout: 10
+
+    steps:
+      - step_type: send_serial
+        description: "发送音量设置指令 (VOL=50)"
+        device_id: "serial_COM3"
+        params:
+          data: "AT+VOL=50\r\n"
+          mode: text
+
+      - step_type: wait_signal
+        description: "等待串口响应"
+        device_id: "serial_COM3"
+        timeout: 3.0
+        params:
+          signal_type: serial
+
+      - step_type: assert_value
+        description: "验证返回值为 OK"
+        expected: "OK"
+        tolerance: 0
+
+  # ============================================================
+  # 用例 2: 网络连通性测试
+  # ============================================================
+  - name: "车机网络连通性测试"
+    description: "验证车机以太网接口 TCP 连通性"
+    category: "网络通信"
+    tags: ["TCP", "网络", "P1"]
+    priority: "P1"
+    timeout: 15
+
+    steps:
+      - step_type: send_network
+        description: "发送心跳包"
+        device_id: "tcp_192.168.1.100"
+        params:
+          data: '{"cmd": "ping"}'
+          encoding: utf-8
+
+      - step_type: wait_signal
+        description: "等待 pong 响应"
+        device_id: "tcp_192.168.1.100"
+        timeout: 5.0
+        params:
+          signal_type: network
+
+      - step_type: assert_timing
+        description: "验证响应时间 < 100ms"
+        params:
+          max_time: 0.1
+          min_time: 0.001
+
+  # ============================================================
+  # 用例 3: ADB 应用启动测试
+  # ============================================================
+  - name: "导航应用启动测试"
+    description: "通过 ADB 启动导航应用并验证启动成功"
+    category: "应用管理"
+    tags: ["ADB", "导航", "P0"]
+    priority: "P0"
+    timeout: 30
+
+    setup_steps:
+      - step_type: send_adb
+        description: "确保设备已连接"
+        device_id: "adb_001"
+        params:
+          command: "getprop ro.boot.serialno"
+
+    steps:
+      - step_type: send_adb
+        description: "启动导航应用"
+        device_id: "adb_001"
+        params:
+          command: "am start -n com.auto.nav/.MainActivity"
+
+      - step_type: wait
+        description: "等待应用启动"
+        params:
+          duration: 3.0
+
+      - step_type: send_adb
+        description: "检查应用是否在前台"
+        device_id: "adb_001"
+        params:
+          command: "dumpsys activity activities | grep mResumedActivity"
+
+      - step_type: assert_state
+        description: "验证导航应用已启动"
+        expected: "com.auto.nav"
+
+      - step_type: screenshot
+        description: "截取启动后画面"
+        device_id: "adb_001"
+        params:
+          save_path: "screenshots/nav_started.png"
+
+    teardown_steps:
+      - step_type: send_adb
+        description: "关闭导航应用"
+        device_id: "adb_001"
+        params:
+          command: "am force-stop com.auto.nav"
+
+  # ============================================================
+  # 用例 4: 自定义脚本断言
+  # ============================================================
+  - name: "响应时间统计验证"
+    description: "验证响应时间在正常范围内"
+    category: "性能监控"
+    tags: ["性能", "P2"]
+    priority: "P2"
+    timeout: 60
+
+    steps:
+      - step_type: wait
+        description: "采样 5 秒"
+        params:
+          duration: 5.0
+
+      - step_type: assert_custom
+        description: "自定义断言：响应时间合理"
+        params:
+          script: |
+            # 自定义 Python 断言脚本
+            # 可用变量: actual, expected, params
+            response_time = actual if isinstance(actual, (int, float)) else 0
+            result = 0 < response_time < 5.0

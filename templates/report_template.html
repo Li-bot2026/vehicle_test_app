@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<!-- report-template-version: 3 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ suite_name }} · 测试报告</title>
+<style>
+:root { --pass:#3fae5a; --fail:#e5484d; --warn:#d99a00; --skip:#8b8f94;
+        --ink:#1f2933; --muted:#7b8794; --line:#e6e9ed; --bg:#f5f6f8; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:"Microsoft YaHei","PingFang SC",Segoe UI,sans-serif; background:var(--bg); color:var(--ink); font-size:14px; }
+a { color:#2563eb; text-decoration:none; }
+.topbar { background:#242f3d; color:#fff; padding:22px 32px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.topbar h1 { font-size:20px; font-weight:600; letter-spacing:.3px; }
+.topbar .meta { color:#9fb0c0; font-size:12px; margin-top:6px; }
+.rate-pill { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.15); border-radius:8px; padding:8px 20px; text-align:center; }
+.rate-pill .num { font-size:26px; font-weight:700; }
+.rate-pill .cap { font-size:11px; color:#9fb0c0; }
+.wrap { max-width:1240px; margin:0 auto; padding:24px 20px 60px; }
+.cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:22px; }
+.card { background:#fff; border:1px solid var(--line); border-radius:10px; padding:16px 18px; }
+.card .label { color:var(--muted); font-size:12px; }
+.card .value { font-size:28px; font-weight:700; margin-top:6px; }
+.card .sub { color:var(--muted); font-size:11px; margin-top:4px; }
+.c-pass .value { color:var(--pass); } .c-fail .value { color:var(--fail); } .c-warn .value { color:var(--warn); }
+.panel { background:#fff; border:1px solid var(--line); border-radius:10px; margin-bottom:22px; overflow:hidden; }
+.panel > h2 { font-size:15px; font-weight:600; padding:14px 20px; border-bottom:1px solid var(--line); background:#fbfcfd; }
+.panel .body { padding:18px 20px; }
+.cat { display:grid; grid-template-columns:170px 1fr 96px; gap:14px; align-items:center; padding:7px 0; font-size:13px; }
+.cat .bar { height:9px; background:#edf0f3; border-radius:6px; overflow:hidden; }
+.cat .bar i { display:block; height:100%; background:var(--pass); }
+.cat .bar i.has-fail { background:linear-gradient(90deg,var(--pass) 0 62%,var(--fail) 62% 100%); }
+.tl-row { display:grid; grid-template-columns:220px 1fr 66px 66px; gap:12px; align-items:center; padding:3px 0; font-size:12px; }
+.tl-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tl-track { position:relative; height:13px; background:#f0f2f5; border-radius:7px; }
+.tl-bar { position:absolute; top:0; height:13px; border-radius:7px; min-width:3px; }
+.tl-bar.passed { background:var(--pass); } .tl-bar.failed,.tl-bar.error { background:var(--fail); }
+.tl-bar.skipped,.tl-bar.aborted { background:var(--skip); } .tl-bar.pending,.tl-bar.running { background:#c9d1d9; }
+.fail-card { border:1px solid #f3c9c9; border-left:4px solid var(--fail); border-radius:8px; padding:16px 18px; margin-bottom:14px; background:#fffafa; }
+.fail-card:last-child { margin-bottom:0; }
+.fail-head { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; }
+.fail-head .name { font-weight:600; font-size:15px; }
+.fail-head .cat-tag { color:var(--muted); font-size:12px; font-weight:400; margin-left:8px; }
+.errpoint { margin-top:12px; background:#fff; border:1px solid #f0d6d6; border-radius:6px; padding:12px 14px; }
+.errpoint .where { color:var(--fail); font-weight:600; font-size:13px; }
+.errpoint .row { display:grid; grid-template-columns:56px 1fr; gap:10px; margin-top:8px; }
+.errpoint .k { color:var(--muted); font-size:12px; }
+.errpoint .v { font-size:13px; word-break:break-all; white-space:pre-wrap; }
+.errpoint .v.code { background:#f6f8fa; border:1px solid var(--line); border-radius:5px; padding:6px 8px; font-family:Consolas,monospace; font-size:12px; color:#b42318; }
+.shots { display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.shots img { width:160px; border:1px solid var(--line); border-radius:6px; display:block; }
+.shots .cap { font-size:11px; color:var(--muted); margin-top:4px; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+details.case { border:1px solid var(--line); border-radius:8px; margin-bottom:10px; background:#fff; }
+details.case > summary { list-style:none; cursor:pointer; padding:12px 16px; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+details.case > summary::-webkit-details-marker { display:none; }
+details.case[open] > summary { border-bottom:1px solid var(--line); background:#fbfcfd; }
+details.case .name { font-weight:600; }
+details.case .grow { flex:1; }
+.st { display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:11px; font-size:12px; font-weight:600; white-space:nowrap; }
+.st-passed { background:#e8f6ec; color:var(--pass); }
+.st-failed { background:#fdecec; color:var(--fail); }
+.st-error { background:#fdecec; color:#c4320a; }
+.st-skipped { background:#fdf6e3; color:var(--warn); }
+.st-aborted,.st-pending,.st-running { background:#eef1f4; color:#5b6770; }
+.prio { font-size:11px; border-radius:9px; padding:1px 8px; border:1px solid var(--line); color:var(--muted); }
+.prio-p0 { color:#b42318; border-color:#f0c2c0; background:#fff5f5; }
+.prio-p1 { color:#b25e09; border-color:#f3dcbb; background:#fffaf0; }
+.prio-p2 { color:#1d4ed8; border-color:#cad9f7; background:#f2f6ff; }
+.prio-p3 { color:#5b6770; border-color:#e1e5e9; background:#f7f8fa; }
+.steps { padding:0 16px 12px; }
+table.steps { width:100%; border-collapse:collapse; font-size:12.5px; }
+table.steps th { text-align:left; color:var(--muted); font-weight:600; padding:8px; border-bottom:1px solid var(--line); font-size:11.5px; }
+table.steps td { padding:8px; border-bottom:1px solid #f0f2f5; vertical-align:top; }
+table.steps tr:last-child td { border-bottom:none; }
+.step-desc .err { margin-top:5px; color:#b42318; font-size:12px; background:#fff5f5; border-left:3px solid var(--fail); padding:5px 8px; border-radius:4px; white-space:pre-wrap; word-break:break-all; }
+.step-desc .step-params { margin-top:4px; color:var(--muted); font-size:11px; font-family:Consolas,monospace; background:#f6f8fa; border:1px solid var(--line); padding:3px 6px; border-radius:4px; max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.step-desc .step-expected { margin-top:3px; color:#1d4ed8; font-size:11.5px; }
+.step-attachments { margin-top:5px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+.step-attachments img { border:1px solid var(--line); border-radius:4px; }
+.case-attachments { padding:8px 16px 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center; font-size:12px; }
+.att-link { display:inline-flex; align-items:center; gap:3px; padding:3px 8px; background:#f0f4ff; border:1px solid #cad9f7; border-radius:5px; font-size:12px; color:#1d4ed8; }
+.att-link:hover { background:#e0eaff; }
+.dot { display:inline-block; width:16px; text-align:center; font-weight:700; }
+.dot.passed { color:var(--pass); } .dot.failed,.dot.error { color:var(--fail); }
+.dot.skipped { color:var(--warn); } .dot.aborted,.dot.pending,.dot.running { color:var(--skip); }
+.muted { color:var(--muted); }
+.empty { color:var(--muted); font-size:13px; padding:6px 0; }
+.footer { text-align:center; color:#a3adb6; font-size:12px; margin-top:30px; }
+@media print {
+  body { background:#fff; }
+  .topbar, .rate-pill, .card, .pill, .catbar span, .badge, .thumb, .shot {
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+  .wrap { max-width:none; margin:0; padding:0; }
+  .panel, .fail-card { break-inside:avoid; }
+  details.case { break-inside:auto; }
+  details.case > summary { break-after:avoid; }
+  a { color:#000; text-decoration:none; }
+  .footer { display:none; }
+}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <h1>{{ suite_name }} · 测试报告</h1>
+    <div class="meta">生成时间 {{ generated_at }} · 共 {{ total_count }} 条用例 / {{ total_steps }} 个步骤 · 总耗时 {{ total_duration }}s</div>
+  </div>
+  <div class="rate-pill">
+    <div class="num">{{ pass_rate }}%</div>
+    <div class="cap">用例通过率</div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cards">
+    <div class="card"><div class="label">用例总数</div><div class="value">{{ total_count }}</div><div class="sub">步骤 {{ total_steps }} 个</div></div>
+    <div class="card c-pass"><div class="label">通过</div><div class="value">{{ passed_count }}</div><div class="sub">步骤通过 {{ passed_steps }}</div></div>
+    <div class="card c-fail"><div class="label">失败 / 错误</div><div class="value">{{ failed_count + error_count }}</div><div class="sub">失败 {{ failed_count }} · 错误 {{ error_count }}</div></div>
+    <div class="card c-warn"><div class="label">跳过 / 中止</div><div class="value">{{ skipped_count + aborted_count }}</div><div class="sub">跳过 {{ skipped_count }} · 中止 {{ aborted_count }}</div></div>
+    <div class="card"><div class="label">步骤通过率</div><div class="value">{% if total_steps %}{{ "%.0f"|format(passed_steps / total_steps * 100) }}{% else %}0{% endif %}%</div><div class="sub">{{ passed_steps }} / {{ total_steps }}</div></div>
+    <div class="card"><div class="label">总耗时</div><div class="value">{{ total_duration }}s</div><div class="sub">平均 {{ "%.2f"|format(total_duration / total_count if total_count else 0) }}s / 用例</div></div>
+  </div>
+
+  {% if category_stats %}
+  <div class="panel">
+    <h2>分类概览</h2>
+    <div class="body">
+      {% for cat, stats in category_stats.items() %}
+      {% set rate = (stats.passed / stats.total * 100) if stats.total > 0 else 0 %}
+      <div class="cat">
+        <div>{{ cat }}</div>
+        <div class="bar"><i class="{% if stats.failed %}has-fail{% endif %}" style="width:{{ "%.1f"|format(rate) }}%"></i></div>
+        <div class="muted">{{ stats.passed }}/{{ stats.total }} · {{ "%.0f"|format(rate) }}%</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if timeline %}
+  <div class="panel">
+    <h2>执行时间线</h2>
+    <div class="body">
+      {% for row in timeline %}
+      <div class="tl-row">
+        <div class="tl-name" title="{{ row.name }}">{{ row.name }}</div>
+        <div class="tl-track"><div class="tl-bar {{ row.status }}" style="left:{{ row.left }}%;width:{{ row.width }}%"></div></div>
+        <div class="muted">{{ row.start }}</div>
+        <div class="muted">{{ row.duration }}s</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if failed_details %}
+  <div class="panel">
+    <h2>失败详情（{{ failed_details|length }}）</h2>
+    <div class="body">
+      {% for v in failed_details %}
+      <div class="fail-card">
+        <div class="fail-head">
+          <div><span class="name">{{ v.case.name }}</span><span class="cat-tag">{{ v.case.category or '未分类' }}</span></div>
+          <div>
+            <span class="prio prio-{{ v.case.priority.value|lower }}">{{ v.case.priority.value }}</span>
+            <span class="st st-{{ v.case.status.value }}">{{ v.status_text }}</span>
+          </div>
+        </div>
+        {% if v.failed_step %}
+        <div class="errpoint">
+          <div class="where">错误点 · {{ v.failed_step.label }} · {{ v.failed_step.type }}</div>
+          <div class="row"><div class="k">操作</div><div class="v">{{ v.failed_step.description }}</div></div>
+          {% if v.failed_step.expected %}<div class="row"><div class="k">预期</div><div class="v">{{ v.failed_step.expected }}</div></div>{% endif %}
+          {% if v.failed_step.actual %}<div class="row"><div class="k">实际</div><div class="v">{{ v.failed_step.actual }}</div></div>{% endif %}
+          <div class="row"><div class="k">原因</div><div class="v code">{{ v.failed_step.error or v.case.error_message or '步骤执行失败' }}</div></div>
+        </div>
+        {% else %}
+        <div class="errpoint">
+          <div class="where">错误点 · 未定位到具体步骤</div>
+          <div class="row"><div class="k">原因</div><div class="v code">{{ v.case.error_message or '用例执行失败' }}</div></div>
+        </div>
+        {% endif %}
+        {% if v.shots %}
+        <div class="shots">
+          {% for s in v.shots %}<a href="{{ s.url }}" target="_blank"><img src="{{ s.url }}" alt="{{ s.name }}" loading="lazy"><div class="cap">{{ s.name }}</div></a>{% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="panel">
+    <h2>用例明细</h2>
+    <div class="body">
+      {% for v in case_views %}
+      <details class="case" {% if v.case.status.value in ('failed', 'error') %}open{% endif %}>
+        <summary>
+          <span class="dot {{ v.case.status.value }}">{{ v.icon }}</span>
+          <span class="name">{{ v.case.name }}</span>
+          <span class="prio prio-{{ v.case.priority.value|lower }}">{{ v.case.priority.value }}</span>
+          <span class="muted">{{ v.case.category or '未分类' }}</span>
+          <span class="grow"></span>
+          <span class="st st-{{ v.case.status.value }}">{{ v.status_text }}</span>
+          <span class="muted">{{ "%.2f"|format(v.case.duration) }}s · {{ v.step_count }} 步</span>
+        </summary>
+        <div class="steps">
+          {% if v.steps %}
+          <table class="steps">
+            <thead>
+              <tr><th style="width:56px">#</th><th style="width:92px">类型</th><th>操作 / 断言</th><th style="width:86px">结果</th><th style="width:62px">耗时</th></tr>
+            </thead>
+            <tbody>
+              {% for s in v.steps %}
+              <tr>
+                <td class="muted">{{ s.seq }}</td>
+                <td class="muted">{{ s.type }}</td>
+                <td class="step-desc">{{ s.description }}
+                  {% if s.params %}<div class="step-params" title="{{ s.params }}">参数: {{ s.params|truncate(80) }}</div>{% endif %}
+                  {% if s.expected %}<div class="step-expected">预期: {{ s.expected }}</div>{% endif %}
+                  {% if s.error %}<div class="err">{{ s.error }}{% if s.actual %}<br>实际：{{ s.actual }}{% endif %}</div>{% endif %}
+                  {% if s.attachments %}
+                  <div class="step-attachments">
+                    {% for att in s.attachments %}
+                      {% if att.is_image %}
+                        <a href="{{ att.url }}" target="_blank"><img src="{{ att.url }}" alt="{{ att.name }}" loading="lazy" style="max-width:120px;max-height:80px;margin:2px;"></a>
+                      {% else %}
+                        <a href="{{ att.url }}" target="_blank" class="att-link">📎 {{ att.name }}</a>
+                      {% endif %}
+                    {% endfor %}
+                  </div>
+                  {% endif %}
+                </td>
+                <td><span class="dot {{ s.status }}">{{ s.icon }}</span> <span class="muted">{{ s.status_text }}</span></td>
+                <td class="muted">{{ "%.2f"|format(s.duration) }}s</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="empty">该用例没有步骤记录</div>
+          {% endif %}
+          {% if v.shots %}
+          <div class="shots">
+            {% for s in v.shots %}{% if s.is_image %}<a href="{{ s.url }}" target="_blank"><img src="{{ s.url }}" alt="{{ s.name }}" loading="lazy"><div class="cap">{{ s.name }}</div></a>{% endif %}{% endfor %}
+          </div>
+          {% endif %}
+          {% if v.other_attachments %}
+          <div class="case-attachments">
+            <strong>附件:</strong>
+            {% for att in v.other_attachments %}
+              <a href="{{ att.url }}" target="_blank" class="att-link">📎 {{ att.name }}</a>
+            {% endfor %}
+          </div>
+          {% endif %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="footer">车机测试应用程序 · 报告自动生成于 {{ generated_at }}</div>
+</div>
+</body>
+</html>

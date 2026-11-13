@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+*.spec
+
+# 虚拟环境
+venv/
+.venv/
+
+# 运行时生成数据
+*.log
+*.db
+reports/
+screenshots/
+.vehicle_test_app/
+
+# IDE / 系统
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
